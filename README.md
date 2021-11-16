@@ -87,17 +87,17 @@ cd classification
    # single GPU
    python tools/train.py configs/xxx_pruning.py --gpus=1
    # multi GPUs (e.g. 4 GPUs)
-   python -m torch.distributed.launch --nproc_per_node=4 tools/train.py CONFIG_PATH --launch pytorch
+   python -m torch.distributed.launch --nproc_per_node=4 tools/train.py configs/xxx_pruning.py --launch pytorch
    ```
    
 2. Fine-tune
    
    In the config file, modify the `deploy_from` to the pruned model, and modify the `samples_per_gpu` to 256/#GPUs. Then
    ```bash
-   # single GPU (memory > 18G)
+   # single GPU
    python tools/train.py configs/xxx_finetune.py --gpus=1
    # multi GPUs (e.g. 4 GPUs)
-   python -m torch.distributed.launch --nproc_per_node=4 tools/train.py CONFIG_PATH --launch pytorch
+   python -m torch.distributed.launch --nproc_per_node=4 tools/train.py configs/xxx_finetune.py --launch pytorch
    ```
    
 3. Test

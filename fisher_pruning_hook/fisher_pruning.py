@@ -433,7 +433,8 @@ class FisherPruningHook(Hook):
             in_channels = float("inf")
             for module in modules:
                 chn = get_channel_num(module, "in")
-                chn /= module.groups if module in self.conv_names else 1
+                module_group = getattr(module, "groups", 1)
+                chn = chn if module_group == 1 else module_group
                 in_channels = min(in_channels, chn)
             self.in_masks[group] = module.weight.new_ones((int(in_channels), ))
             for module in modules:
@@ -603,17 +604,22 @@ def deploy_pruning(model):
             module.finetune = True
             requires_grad = module.weight.requires_grad
             out_mask = module.out_mask.bool()
-            out_mask = out_mask.unsqueeze(1).expand(-1, module.out_channels // out_mask.size(0)).view(-1)
+            out_mask = out_mask.unsqueeze(1).expand(-1, module.out_channels // out_mask.size(0)).contiguous().view(-1)
             if hasattr(module, 'bias') and module.bias is not None:
                 module.bias = nn.Parameter(module.bias.data[out_mask], requires_grad=requires_grad)
             temp_weight = module.weight.data[out_mask.bool()]
             in_mask = module.in_mask.bool()
-            in_mask = in_mask.unsqueeze(1).expand(-1, module.in_channels // in_mask.size(0)).view(-1)
-            module.weight = nn.Parameter(temp_weight[:, in_mask].data, requires_grad=requires_grad)
 
-            module.in_channels = int(in_mask.sum())
-            module.out_channels = int(out_mask.sum())
-            if module.groups > 1:
+            if module.groups == 1:
+                in_mask = in_mask.unsqueeze(1).expand(-1, temp_weight.size(1) // in_mask.size(0)).contiguous().view(-1)
+                module.weight = nn.Parameter(temp_weight[:, in_mask].data, requires_grad=requires_grad)
+
+                module.in_channels = int(in_mask.sum())
+                module.out_channels = int(out_mask.sum())
+            else:
+                module.weight = nn.Parameter(temp_weight.data, requires_grad=requires_grad)
+                module.in_channels = int(module.in_channels * in_mask.sum() // in_mask.numel())
+                module.out_channels = int(out_mask.sum())
                 module.groups = int(module.groups * in_mask.sum() // in_mask.numel())
 
         elif type(module).__name__ == 'Linear':
