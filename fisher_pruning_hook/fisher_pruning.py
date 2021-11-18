@@ -394,11 +394,12 @@ class FisherPruningHook(Hook):
             grad_feature = grad_input[0] if layer_name == "Conv2d" else grad_input[1]
             if grad_feature is not None:
                 feature = self.nonpass_inputs[module].pop(-1)[0]
-                # avoid that last batch is't full, but actually it's always full in mmdetection.
                 grads = feature * grad_feature
                 while grads.dim() > 2:
                     grads = grads.sum(dim=-1)
-                grads = grads.view(self.batch_size, -1, grads.size(1)).sum(dim=1)
+                if grads.size(0) % self.batch_size == 0:
+                    grads = grads.view(self.batch_size, -1, grads.size(1)).sum(dim=1)
+                # avoid that last batch is't full, but actually it's always full in mmdetection.
                 self.temp_fisher_info[module][:grad_feature.size(0)] += grads
 
 
