@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from mmcls.models import build_classifier
 import time
-from fisher_pruning_hook import FisherPruningHook, FisherPruningHook_UNGROUP
+from fisher_pruning_hook import FisherPruningHook
 from torch.nn import Conv2d, Linear
 from torch.nn.modules.batchnorm import _BatchNorm
 from torch.nn.modules.activation import ReLU

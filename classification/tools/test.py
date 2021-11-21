@@ -15,7 +15,7 @@ from mmcls.apis import multi_gpu_test, single_gpu_test
 from mmcls.datasets import build_dataloader, build_dataset
 from mmcls.models import build_classifier
 
-from fisher_pruning_hook import FisherPruningHook, FisherPruningHook_UNGROUP
+from fisher_pruning_hook import FisherPruningHook
 
 
 # TODO import `wrap_fp16_model` from mmcv and delete them from mmcls

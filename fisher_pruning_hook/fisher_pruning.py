@@ -479,12 +479,8 @@ class FisherPruningHook(Hook):
         else:
             module_names = self.fc_names
 
-        if pattern is FC:
-            for module, name in module_names.items():
-                var2module[id(module.bias)] = module
-        else:
-            for module, name in module_names.items():
-                var2module[id(module.weight)] = module
+        for module, name in module_names.items():
+            var2module[id(module.weight)] = module
 
         # same module may appear several times in computing graph,
         # so same module can correspond to several op, for example,
@@ -494,7 +490,9 @@ class FisherPruningHook(Hook):
         for op, parents in op2parents.items():
             # TODO bfs to get variable
             if pattern is FC:
-                var_id = id(op.next_functions[0][0].variable)
+                tbackward_op = filter(lambda x: x[0].name().startswith("TBackward"), op.next_functions)
+                param_op = next(tbackward_op)[0].next_functions[0][0]
+                var_id = id(param_op.variable)
             else:
                 var_id = id(op.next_functions[1][0].variable)
             module = var2module[var_id]
